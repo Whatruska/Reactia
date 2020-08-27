@@ -1,8 +1,8 @@
 import React, { SyntheticEvent, useState } from 'react';
 import firebase from 'firebase';
-import { Redirect, useHistory } from 'react-router-dom';
+import { Redirect } from 'react-router-dom';
 import {
-  Button, Input, Typography, Form,
+  Button, Input, Typography, Form, message,
 } from 'antd';
 import {
   PhoneOutlined, LockOutlined, LoginOutlined, SendOutlined, Loading3QuartersOutlined,
@@ -13,7 +13,6 @@ import classes from './SignIn.module.css';
 const { Title } = Typography;
 
 const SignIn = () => {
-  const history = useHistory();
   const [confirmRes, setConfirmRes] = useState();
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -28,9 +27,9 @@ const SignIn = () => {
       firebase.auth().signInWithPhoneNumber(phone, recaptchaVerifier)
         .then((confirmationResult) => {
           setConfirmRes(confirmationResult);
-          alert('Check your phone');
+          message.success('Code successfully sent. Check your phone', 2);
         }).catch((error) => {
-          alert(error);
+          message.error(error.message, 2);
         })
         .finally(() => {
           setLoading(false);
@@ -39,7 +38,10 @@ const SignIn = () => {
       confirmRes.confirm(code).then((result:any) => {
         const { user } = result;
         window.localStorage.setItem('user', JSON.stringify(user));
-        history.push('/');
+        recaptchaVerifier.clear();
+        window.location.href = '/';
+      }).catch((error:any) => {
+        message.error(error, 2);
       }).finally(() => {
         setLoading(false);
       });
@@ -68,7 +70,15 @@ const SignIn = () => {
           name="phone"
           rules={[{ required: true, message: 'Please input your phone!' }]}
         >
-          <Input type="tel" size="large" prefix={<PhoneOutlined />} placeholder="Your phone" autoComplete="true" onChange={(e) => setPhone(e.target.value)} />
+          <Input
+            type="tel"
+            size="large"
+            prefix={<PhoneOutlined />}
+            disabled={confirmRes}
+            placeholder="Your phone"
+            autoComplete="true"
+            onChange={(e) => setPhone(e.target.value)}
+          />
         </Form.Item>
         <Form.Item
           name="code"
