@@ -1,48 +1,105 @@
 import React, { SyntheticEvent, useState } from 'react';
 import firebase from 'firebase';
 import { Redirect, useHistory } from 'react-router-dom';
+import {
+  Button, Input, Typography, Form,
+} from 'antd';
+import {
+  PhoneOutlined, LockOutlined, LoginOutlined, SendOutlined, Loading3QuartersOutlined,
+} from '@ant-design/icons';
+import logo from '../../assets/img/Reactia_logo.png';
+import classes from './SignIn.module.css';
+
+const { Title } = Typography;
 
 const SignIn = () => {
   const history = useHistory();
-  const [confirmRes, setConfirmRes] = useState(JSON.parse(window.localStorage.getItem('confirm') as string));
-  const phoneRef = React.createRef<any>();
-  const codeRef = React.createRef<any>();
+  const [confirmRes, setConfirmRes] = useState();
+  const [phone, setPhone] = useState('');
+  const [code, setCode] = useState('');
+  const [loading, setLoading] = useState<boolean>(false);
   const recaptchaVerifier = new firebase.auth.RecaptchaVerifier('captcha-container', {
     size: 'invisible',
   });
-  const signIn = (e:SyntheticEvent) => {
+  const signIn = (e: SyntheticEvent) => {
     e.preventDefault();
+    setLoading(true);
     if (!confirmRes) {
-      firebase.auth().signInWithPhoneNumber(phoneRef.current.value, recaptchaVerifier)
+      firebase.auth().signInWithPhoneNumber(phone, recaptchaVerifier)
         .then((confirmationResult) => {
-          window.localStorage.setItem('confirm', JSON.stringify(confirmationResult));
           setConfirmRes(confirmationResult);
           alert('Check your phone');
         }).catch((error) => {
           alert(error);
+        })
+        .finally(() => {
+          setLoading(false);
         });
     } else {
-      const code = codeRef.current.value;
       confirmRes.confirm(code).then((result:any) => {
         const { user } = result;
-        window.localStorage.removeItem('confirm');
         window.localStorage.setItem('user', JSON.stringify(user));
         history.push('/');
-      }).catch((error:any) => {
-        alert(error);
+      }).finally(() => {
+        setLoading(false);
       });
     }
   };
   if (window.localStorage.getItem('user')) return (<Redirect to="/" />);
+  const layout = {
+    wrapperCol: { span: 60 },
+  };
+  const tailLayout = {
+    wrapperCol: { offset: 0, span: 16 },
+  };
+
   return (
-    <form>
-      Sign in
-      <input type="tel" required ref={phoneRef} autoComplete="true" />
-      <input type="number" hidden={!confirmRes} required ref={codeRef} autoComplete="true" />
-      <button type="submit" onClick={signIn}>
-        Submit
-      </button>
-    </form>
+    <div className={classes.SignIn}>
+      <img src={logo} alt="Reactia logo" className={classes.logo} />
+      <Form
+        {...layout}
+        name="basic"
+        initialValues={{ remember: true }}
+      >
+        <Form.Item {...layout}>
+          <Title level={2}>Sign in</Title>
+        </Form.Item>
+        <Form.Item
+          name="phone"
+          rules={[{ required: true, message: 'Please input your phone!' }]}
+        >
+          <Input type="tel" size="large" prefix={<PhoneOutlined />} placeholder="Your phone" autoComplete="true" onChange={(e) => setPhone(e.target.value)} />
+        </Form.Item>
+        <Form.Item
+          name="code"
+          rules={[{ required: true, message: 'Please input your code!' }]}
+        >
+          <Input
+            type="number"
+            size="large"
+            prefix={<LockOutlined />}
+            placeholder="Code from message"
+            style={{
+              display: !confirmRes ? 'none' : '',
+            }}
+            onChange={(e) => setCode(e.target.value)}
+            required
+            autoComplete="true"
+          />
+        </Form.Item>
+        <Form.Item {...tailLayout}>
+          <Button type="primary" htmlType="submit" onClick={signIn} icon={loading ? <Loading3QuartersOutlined spin /> : confirmRes ? <LoginOutlined /> : <SendOutlined />}>
+            {
+              loading
+                ? 'Loading'
+                : confirmRes
+                  ? 'Login'
+                  : 'Get code'
+            }
+          </Button>
+        </Form.Item>
+      </Form>
+    </div>
   );
 };
 

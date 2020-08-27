@@ -1,6 +1,7 @@
 import React from 'react';
 import firebase from 'firebase';
 import { Redirect, useHistory } from 'react-router-dom';
+import { Button } from 'antd';
 
 const MainPage = () => {
   const history = useHistory();
@@ -14,7 +15,7 @@ const MainPage = () => {
   return (
     <div>
       <h2>Main page</h2>
-      <button onClick={logout}>Logout</button>
+      <Button type="primary" onClick={logout} danger>Logout</Button>
     </div>
   );
 };
