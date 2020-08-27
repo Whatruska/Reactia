@@ -6,9 +6,10 @@ import { useHistory, NavLink } from 'react-router-dom';
 import firebase from 'firebase';
 import { HomeOutlined, MessageOutlined, UserOutlined } from '@ant-design/icons';
 import classes from './MyLayout.module.css';
+import logo from '../../assets/img/Reactia_logo.png';
 
 const { Header, Footer } = Layout;
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 type WithChildren = {
     children: ReactNode
@@ -25,12 +26,8 @@ const MyLayout = ({ children }:WithChildren) => {
     <Layout>
       <Header>
         <Row align="middle" justify="space-between" gutter={16}>
-          <Col span={4}>
-            <Title level={3} style={{ marginBottom: '0px' }}>
-              <Text style={{ color: 'white' }}>
-                Reactia
-              </Text>
-            </Title>
+          <Col span={4} style={{ height: '9vh', position: 'relative' }}>
+            <img src={logo} alt="Reactia logo" className={classes.logo} />
           </Col>
           <Menu theme="dark" mode="horizontal">
             <Menu.Item key="home" icon={<HomeOutlined />}>
