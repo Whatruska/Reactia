@@ -4,6 +4,7 @@ import './index.css';
 import firebase from 'firebase';
 import App from './App';
 import * as serviceWorker from './serviceWorker';
+import 'antd/dist/antd.css';
 
 const CONFIG = {
   apiKey: process.env.REACT_APP_API_KEY,

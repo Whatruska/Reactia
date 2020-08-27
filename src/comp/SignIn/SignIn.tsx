@@ -1,8 +1,9 @@
 import React, { SyntheticEvent, useState } from 'react';
 import firebase from 'firebase';
-import { NavLink } from 'react-router-dom';
+import { Redirect, useHistory } from 'react-router-dom';
 
 const SignIn = () => {
+  const history = useHistory();
   const [confirmRes, setConfirmRes] = useState(JSON.parse(window.localStorage.getItem('confirm') as string));
   const phoneRef = React.createRef<any>();
   const codeRef = React.createRef<any>();
@@ -25,12 +26,14 @@ const SignIn = () => {
       confirmRes.confirm(code).then((result:any) => {
         const { user } = result;
         window.localStorage.removeItem('confirm');
-        alert(JSON.stringify(user));
+        window.localStorage.setItem('user', JSON.stringify(user));
+        history.push('/');
       }).catch((error:any) => {
         alert(error);
       });
     }
   };
+  if (window.localStorage.getItem('user')) return (<Redirect to="/" />);
   return (
     <form>
       Sign in
@@ -39,7 +42,6 @@ const SignIn = () => {
       <button type="submit" onClick={signIn}>
         Submit
       </button>
-      <NavLink to="/signUp">Register</NavLink>
     </form>
   );
 };
