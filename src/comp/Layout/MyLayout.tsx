@@ -3,11 +3,13 @@ import {
 } from 'antd';
 import React, { ReactNode } from 'react';
 import { useHistory, NavLink } from 'react-router-dom';
-import firebase from 'firebase';
 import { HomeOutlined, MessageOutlined, UserOutlined } from '@ant-design/icons';
 import { Helmet } from 'react-helmet';
 import classes from './MyLayout.module.css';
 import logo from '../../assets/img/Reactia_logo.png';
+import {RootState} from "../../store";
+import { logoutThunk} from "../../bll/reducers/userReducer";
+import {connect, ConnectedProps} from "react-redux";
 
 const { Header, Footer } = Layout;
 
@@ -15,13 +17,11 @@ type Props = {
     children: ReactNode,
     title: string
 }
-const MyLayout = ({ children, title }:Props) => {
+const MyLayout = ({ children, title, logout }: ConnectedProps<typeof connector> & Props) => {
   const history = useHistory();
-  const logout = () => {
-    firebase.auth().signOut().then(() => {
-      window.localStorage.removeItem('user');
-      history.push('/signIn');
-    });
+  const handleLogout = () => {
+    logout();
+    history.push('/signIn');
   };
   return (
     <Layout>
@@ -52,7 +52,7 @@ const MyLayout = ({ children, title }:Props) => {
             </Menu.Item>
           </Menu>
           <Col span={4} offset={2}>
-            <Button type="primary" onClick={logout} danger>Logout</Button>
+            <Button type="primary" onClick={handleLogout} danger>Logout</Button>
           </Col>
         </Row>
       </Header>
@@ -66,4 +66,14 @@ const MyLayout = ({ children, title }:Props) => {
   );
 };
 
-export default MyLayout;
+const mapStateToProps = (state: RootState) => ({});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  logout: () => {
+    dispatch(logoutThunk());
+  },
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export default connector(MyLayout);

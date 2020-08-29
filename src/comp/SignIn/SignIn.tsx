@@ -1,18 +1,23 @@
 import React, { SyntheticEvent, useState } from 'react';
 import firebase from 'firebase';
-import { Redirect } from 'react-router-dom';
+import { Redirect, useHistory } from 'react-router-dom';
 import {
   Button, Input, Typography, Form, message,
 } from 'antd';
 import {
   PhoneOutlined, LockOutlined, LoginOutlined, SendOutlined, Loading3QuartersOutlined,
 } from '@ant-design/icons';
+import { connect, ConnectedProps } from 'react-redux';
 import logo from '../../assets/img/Reactia_logo.png';
 import classes from './SignIn.module.css';
+import { RootState } from '../../store';
+import { loginThunk } from '../../bll/reducers/userReducer';
+import { User } from '../../types/types';
+import FullScreenPreloader from "../FullScreenPreloader/FullScreenPreloader";
 
 const { Title } = Typography;
 
-const SignIn = () => {
+const SignIn = ({ isLogged, login, isFetching }: ConnectedProps<typeof connector>) => {
   const [confirmRes, setConfirmRes] = useState();
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
@@ -20,6 +25,7 @@ const SignIn = () => {
   const recaptchaVerifier = new firebase.auth.RecaptchaVerifier('captcha-container', {
     size: 'invisible',
   });
+  const history = useHistory();
   const signIn = (e: SyntheticEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -36,25 +42,28 @@ const SignIn = () => {
         });
     } else {
       confirmRes.confirm(code).then((result:any) => {
-        const { user } = result;
-        window.localStorage.setItem('user', JSON.stringify(user));
+        const newUser = result.user;
+        login({
+          ...newUser,
+          id: newUser.uid,
+        });
         recaptchaVerifier.clear();
-        window.location.href = '/';
+        history.push('/');
       }).catch((error:any) => {
-        message.error(error, 2);
+        message.error((error), 2);
       }).finally(() => {
         setLoading(false);
       });
     }
   };
-  if (window.localStorage.getItem('user')) return (<Redirect to="/" />);
+  if (isLogged) return (<Redirect to="/" />);
   const layout = {
     wrapperCol: { span: 60 },
   };
   const tailLayout = {
     wrapperCol: { offset: 0, span: 16 },
   };
-
+  if (isFetching) return (<FullScreenPreloader />);
   return (
     <div className={classes.SignIn}>
       <img src={logo} alt="Reactia logo" className={classes.logo} />
@@ -113,4 +122,18 @@ const SignIn = () => {
   );
 };
 
-export default SignIn;
+const mapStateToProps = (state: RootState) => ({
+  isFetching: state.users.isFetching,
+  isLogged: state.users.isLogged,
+  user: state.users.user,
+});
+
+const mapDispatchToProps = (dispatch: any) => ({
+  login: (user: User) => {
+    dispatch(loginThunk(user));
+  },
+});
+
+const connector = connect(mapStateToProps, mapDispatchToProps);
+
+export default connector(SignIn);
