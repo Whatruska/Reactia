@@ -78,15 +78,14 @@ const loginThunk = (user: User) => (dispatch: any) => {
   dispatch(toggleFetchingAC());
   db.collection(USER_COLLECTION_NAME).where('id', '==', user.id).get().then((querry) => {
     const { size } = querry;
-    debugger;
     if (size) {
       const data: Array<User> = [];
       querry.forEach((resp) => {
         data.push(resp.data() as User);
       });
       dispatch(setUserAC(convertUser(data[0])));
+      dispatch(toggleRegisterAC());
     } else {
-      debugger;
       dispatch(createUserThunk(user));
     }
   })
