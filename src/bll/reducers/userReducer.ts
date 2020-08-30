@@ -3,18 +3,16 @@ import { message } from 'antd';
 import { db, storage } from '../../fbconfig';
 import { Action, User, UserState } from '../../types/types';
 
-const USER_COLLECTION_NAME = 'users';
+export const USER_COLLECTION_NAME = 'users';
 const USER_STORAGE_NAME = 'REACTIA/USER';
-const getUserFromStorage = (): User => {
-  return JSON.parse(window.localStorage.getItem(USER_STORAGE_NAME) as string);
-};
+const getUserFromStorage = (): User => JSON.parse(window.localStorage.getItem(USER_STORAGE_NAME) as string);
 const userFromStorage: User = getUserFromStorage();
 
 const initialState: UserState = {
   user: userFromStorage,
   isFetching: false,
   isLogged: !!userFromStorage,
-  isRegistered: !userFromStorage.username.includes(userFromStorage.id),
+  isRegistered: userFromStorage ? !userFromStorage.username.includes(userFromStorage.id) : false,
 };
 
 const BASE_ACTION = 'REACTIA/USER/';
@@ -60,17 +58,18 @@ const setPhotoUrlAC = (photo_url: string): Action<typeof SET_PHOTO_URL, string> 
   payload: photo_url,
 });
 
-const convertUser = ({
-  id, friend, username, photo_url,
-}: any) => ({
-  id, friends: friend || [], username: username || `User ${id}`, photo_url: photo_url || '',
-});
+const convertUser = ({uid, friends, username, photo_url}: any) => {
+  return ({
+    id: uid, friends: friends || [], username: username || `User ${uid}`, photo_url: photo_url || '',
+  });
+};
 
-const createUserThunk = ({ id }: User) => (dispatch: any) => {
+const createUserThunk = (user: User) => (dispatch: any) => {
   dispatch(toggleFetchingAC());
-  const user = convertUser(id);
-  db.collection(USER_COLLECTION_NAME).doc(id).set(user).then(() => {
-    dispatch(setUserAC(user));
+  const newUser = convertUser(user);
+  debugger;
+  db.collection(USER_COLLECTION_NAME).doc(newUser.id).set(newUser).then(() => {
+    dispatch(setUserAC(newUser));
     dispatch(toggleFetchingAC());
   });
 };
@@ -79,6 +78,7 @@ const loginThunk = (user: User) => (dispatch: any) => {
   dispatch(toggleFetchingAC());
   db.collection(USER_COLLECTION_NAME).where('id', '==', user.id).get().then((querry) => {
     const { size } = querry;
+    debugger;
     if (size) {
       const data: Array<User> = [];
       querry.forEach((resp) => {
@@ -86,6 +86,7 @@ const loginThunk = (user: User) => (dispatch: any) => {
       });
       dispatch(setUserAC(convertUser(data[0])));
     } else {
+      debugger;
       dispatch(createUserThunk(user));
     }
   })
