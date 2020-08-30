@@ -67,7 +67,6 @@ const convertUser = ({uid, friends, username, photo_url}: any) => {
 const createUserThunk = (user: User) => (dispatch: any) => {
   dispatch(toggleFetchingAC());
   const newUser = convertUser(user);
-  debugger;
   db.collection(USER_COLLECTION_NAME).doc(newUser.id).set(newUser).then(() => {
     dispatch(setUserAC(newUser));
     dispatch(toggleFetchingAC());

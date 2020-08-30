@@ -8,6 +8,7 @@ import Posts from './comp/Posts/Posts';
 import Friends from './comp/Friends/Friends';
 import store from "./store";
 import Register from "./comp/Register/Register";
+import UserPage from "./comp/UserPage/UserPage";
 
 type Doc = {
   title: string,
@@ -30,6 +31,9 @@ function App() {
           </Route>
           <Route path="/register" exact>
             <Register />
+          </Route>
+          <Route path="/user/:username" exact>
+            <UserPage />
           </Route>
           <Route>
             <MainPage />
