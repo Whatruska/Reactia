@@ -35,5 +35,6 @@ export type Action<T, E> = {
 export type UserState = {
     user: User,
     isFetching: boolean,
-    isLogged: boolean
+    isLogged: boolean,
+    isRegistered: boolean
 }

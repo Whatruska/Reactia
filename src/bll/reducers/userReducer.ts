@@ -1,24 +1,33 @@
 import firebase from 'firebase';
-import db from '../../fbconfig';
+import { message } from 'antd';
+import { db, storage } from '../../fbconfig';
 import { Action, User, UserState } from '../../types/types';
 
 const USER_COLLECTION_NAME = 'users';
 const USER_STORAGE_NAME = 'REACTIA/USER';
-
-const userFromStorage: User = JSON.parse(window.localStorage.getItem(USER_STORAGE_NAME) as string);
+const getUserFromStorage = (): User => {
+  return JSON.parse(window.localStorage.getItem(USER_STORAGE_NAME) as string);
+};
+const userFromStorage: User = getUserFromStorage();
 
 const initialState: UserState = {
   user: userFromStorage,
   isFetching: false,
   isLogged: !!userFromStorage,
+  isRegistered: !userFromStorage.username.includes(userFromStorage.id),
 };
 
-const SET_USER = 'REACTIA/USER/SET_USER';
-const TOGGLE_FETCHING = 'REACTIA/USER/TOGGLE_FETCHING';
-const LOGIN = 'REACTIA/USER/LOGIN';
-const LOGOUT = 'REACTIA/USER/LOGOUT';
+const BASE_ACTION = 'REACTIA/USER/';
 
-type VALID_ACTIONS = typeof SET_USER | typeof TOGGLE_FETCHING | typeof LOGIN | typeof LOGOUT
+const SET_USER = `${BASE_ACTION}SET_USER`;
+const TOGGLE_FETCHING = `${BASE_ACTION}TOGGLE_FETCHING`;
+const LOGIN = `${BASE_ACTION}LOGIN`;
+const LOGOUT = `${BASE_ACTION}LOGOUT`;
+const TOGGLE_REGISTER = `${BASE_ACTION}TOGGLE_REGISTER`;
+const SET_USERNAME = `${BASE_ACTION}SET_USERNAME`;
+const SET_PHOTO_URL = `${BASE_ACTION}SET_PHOTO_URL`;
+
+type VALID_ACTIONS = typeof SET_USER | typeof TOGGLE_FETCHING | typeof LOGIN | typeof LOGOUT | typeof TOGGLE_REGISTER | typeof SET_USERNAME | typeof SET_PHOTO_URL
 
 const setUserAC = (user: User): Action<typeof SET_USER, User> => ({
   type: SET_USER,
@@ -29,12 +38,26 @@ const toggleFetchingAC = (): Action<typeof TOGGLE_FETCHING, never> => ({
   type: TOGGLE_FETCHING,
 });
 
+const toggleRegisterAC = (): Action<typeof TOGGLE_REGISTER, never> => ({
+  type: TOGGLE_REGISTER,
+});
+
 const loginAC = (): Action<typeof LOGIN, never> => ({
   type: LOGIN,
 });
 
 const logoutAC = (): Action<typeof LOGOUT, never> => ({
   type: LOGOUT,
+});
+
+const setUsernameAC = (username: string): Action<typeof SET_USERNAME, string> => ({
+  type: SET_USERNAME,
+  payload: username,
+});
+
+const setPhotoUrlAC = (photo_url: string): Action<typeof SET_PHOTO_URL, string> => ({
+  type: SET_PHOTO_URL,
+  payload: photo_url,
 });
 
 const convertUser = ({
@@ -78,6 +101,26 @@ const logoutThunk = () => (dispatch: any) => {
   firebase.auth().signOut();
 };
 
+const registerThunk = (file: File, username: string, id: string) => (dispatch: any) => {
+  dispatch(toggleFetchingAC());
+  const AVATARS_PATH = 'imgs/avatars/';
+  const fileRef = storage.ref('imgs/avatars/').child(id);
+  fileRef.put(file).then(() => {
+    db.collection(USER_COLLECTION_NAME).doc(id).update({
+      photo_url: AVATARS_PATH + id,
+      username,
+    }).then(() => {
+      dispatch(setUsernameAC(username));
+      dispatch(setPhotoUrlAC(AVATARS_PATH + id));
+      dispatch(toggleRegisterAC());
+    });
+  }).catch((error) => {
+    message.error(error, 2);
+  }).finally(() => {
+    dispatch(toggleFetchingAC());
+  });
+};
+
 const userReducer = (state = initialState, action: Action<VALID_ACTIONS, any>) => {
   const stateCopy = { ...state };
   switch (action.type) {
@@ -103,6 +146,25 @@ const userReducer = (state = initialState, action: Action<VALID_ACTIONS, any>) =
         username: '',
         friends: [],
       };
+      stateCopy.isRegistered = false;
+      break;
+    }
+    case SET_PHOTO_URL: {
+      stateCopy.user.photo_url = action.payload;
+      const user = getUserFromStorage();
+      user.photo_url = action.payload;
+      window.localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(user));
+      break;
+    }
+    case SET_USERNAME: {
+      stateCopy.user.username = action.payload;
+      const user = getUserFromStorage();
+      user.username = action.payload;
+      window.localStorage.setItem(USER_STORAGE_NAME, JSON.stringify(user));
+      break;
+    }
+    case TOGGLE_REGISTER: {
+      stateCopy.isRegistered = !stateCopy.isRegistered;
       break;
     }
     default: break;
@@ -111,5 +173,5 @@ const userReducer = (state = initialState, action: Action<VALID_ACTIONS, any>) =
 };
 
 export {
-  userReducer, createUserThunk, loginThunk, logoutThunk,
+  userReducer, createUserThunk, loginThunk, logoutThunk, registerThunk,
 };

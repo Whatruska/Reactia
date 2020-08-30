@@ -7,6 +7,7 @@ import MainPage from './comp/MainPage/MainPage';
 import Posts from './comp/Posts/Posts';
 import Friends from './comp/Friends/Friends';
 import store from "./store";
+import Register from "./comp/Register/Register";
 
 type Doc = {
   title: string,
@@ -26,6 +27,9 @@ function App() {
           </Route>
           <Route path="/friends" exact>
             <Friends />
+          </Route>
+          <Route path="/register" exact>
+            <Register />
           </Route>
           <Route>
             <MainPage />
