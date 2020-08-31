@@ -82,7 +82,7 @@ const loginThunk = (user: User) => (dispatch: any) => {
       querry.forEach((resp) => {
         data.push(resp.data() as User);
       });
-      dispatch(setUserAC(convertUser(data[0])));
+      dispatch(setUserAC(data[0]));
       dispatch(toggleRegisterAC());
     } else {
       dispatch(createUserThunk(user));

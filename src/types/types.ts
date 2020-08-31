@@ -7,10 +7,10 @@ export type User = {
 
 export type Post = {
     author: string,
-    comments: Array<string>,
+    comments: Array<Comment>,
     created_at: Date,
     desc: string,
-    title: string
+    title: string,
 }
 
 export type Message = {
@@ -37,4 +37,9 @@ export type UserState = {
     isFetching: boolean,
     isLogged: boolean,
     isRegistered: boolean
+}
+
+export type PostsState = {
+    posts: Array<Post>,
+    isFetching: boolean,
 }
